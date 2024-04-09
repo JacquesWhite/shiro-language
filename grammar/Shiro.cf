@@ -1,0 +1,128 @@
+-- Programs ---------------------------------------------------------------------
+
+entrypoints       Program ;
+
+PProgram.         Program ::= [Instr] ;
+
+-- Instruction types --------------------------------------------------------------
+
+InstrBlock.       Instr ::= Block ;
+InstBlock.        Block ::= "{" [Instr] "}" ;
+FunBlockRetVal.   BlockValFun ::= "{" [Instr] InstrRetVal "}" ;
+FunBlockRetUnit.  BlockUnitFun ::= Block ;
+
+InstrDecl.        Instr ::= Decl ";" ;
+InstrExpr.        Instr ::= Expr ";" ;
+
+-- Declarations -------------------------------------------------------------------
+
+DeclFun.          Instr ::= "fun" Ident "(" [Arg] ")" ":" TypeVal BlockValFun ;
+DeclFunUnit.      Instr ::= "fun" Ident "(" [Arg] ")" ":" TypeUnit BlockUnitFun ;
+
+DeclVal.          Decl ::= "val" [DeclItem];
+DeclConst.        Decl ::= "const" [DeclItem];
+DeclIt.           DeclItem ::= Ident ":" TypeVal "=" Expr ;
+DeclItAutoType.   DeclItem ::= Ident "=" Expr ;
+
+separator         DeclItem "," ;
+
+-- Instructions -------------------------------------------------------------------
+
+InstUnit.         Instr ::= ";" ;
+
+InstIncr.         Instr ::= Ident "++" ";";
+InstDecr.         Instr ::= Ident "--" ";";
+
+InstAss.          Instr ::= Ident "=" Expr ";";
+
+InstRetExpr.      InstrRetVal ::= "return" Expr ";";
+InstRetUnit.      InstrRetUnit ::= "return" ";";
+
+InstCond.         Instr ::= CondStmt ;
+CondIf.           CondStmt ::= "if" Expr Block ;
+CondIfElse.       CondStmt ::= "if" Expr Block "else" Block ;
+CondIfElseIf.     CondStmt ::= "if" Expr Block "else" CondStmt ;
+
+InstWhile.        Instr ::= "while" Expr Block ;
+InstFor.          Instr ::= "for" Ident "from" Expr "to" Expr Block ;
+
+
+separator Instr "" ;
+
+-- Types ------------------------------------------------------------------------
+
+TypeVoid.         TypeUnit ::= "Unit" ;
+
+TypeInt.          TypeVal ::= "Int" ;
+TypeBool.         TypeVal ::= "Bool" ;
+TypeString.       TypeVal ::= "String" ;
+
+separator TypeVal "," ;
+
+-- Functions --------------------------------------------------------------------
+
+TypeFun.          TypeVal ::= "(" [ArgType] ")" "->" TypeVal ;
+TypeFunUnit.      TypeVal ::= "(" [ArgType] ")" "->" TypeUnit ;
+
+ValArgType.       ArgType ::= TypeVal ;
+ConstArgType.     ArgType ::= "const" TypeVal ;
+RefArgType.       ArgType ::= "ref" TypeVal ;
+
+separator ArgType "," ;
+
+ArgWithType.      Arg ::= Ident ":" ArgType ;
+
+separator Arg "," ;
+
+
+-- Expressions ------------------------------------------------------------------
+
+ExprVar.          Expr6 ::= Ident ;
+ExprLitInt.       Expr6 ::= Integer ;
+ExprLitTrue.      Expr6 ::= "True" ;
+ExprLitFalse.     Expr6 ::= "False" ;
+ExprLitString.    Expr6 ::= String ;
+
+ExprApp.          Expr6 ::= Ident "(" [Expr] ")" ;
+
+ExprNeg.          Expr5 ::= "-" Expr6 ;
+ExprNot.          Expr5 ::= "!" Expr6 ;
+
+ExprMul.          Expr4 ::= Expr4 MulOp Expr5 ;
+
+ExprAdd.          Expr3 ::= Expr3 AddOp Expr4 ;
+
+ExprRel.          Expr2 ::= Expr2 RelOp Expr3 ;
+
+ExprAnd.          Expr1 ::= Expr2 "&&" Expr1 ;
+
+ExprOr.           Expr ::= Expr1 "||" Expr ;
+
+ExprTernary.      Expr ::= Expr1 "?" Expr1 ":" Expr ;
+
+ExprLambda.       Expr ::= "(" [Arg] ")" ":" TypeVal "=>" BlockValFun ;
+
+coercions  Expr 6 ;
+
+separator Expr "," ;
+
+-- Operators --------------------------------------------------------------------
+
+OpPlus.           AddOp ::= "+" ;
+OpMinus.          AddOp ::= "-" ;
+OpTimes.          MulOp ::= "*" ;
+OpDiv.            MulOp ::= "/" ;
+OpMod.            MulOp ::= "%" ;
+
+OpLt.             RelOp ::= "<" ;
+OpLe.             RelOp ::= "<=" ;
+OpGt.             RelOp ::= ">" ;
+OpGe.             RelOp ::= ">=" ;
+
+OpEq.             RelOp ::= "==" ;
+OpNe.             RelOp ::= "!=" ;
+
+-- Comments ---------------------------------------------------------------------
+
+comment         "//" ;
+comment         "/*" "*/" ;

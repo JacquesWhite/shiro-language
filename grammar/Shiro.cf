@@ -46,6 +46,8 @@ CondIfElseIf.     CondStmt ::= "if" Expr Block "else" CondStmt ;
 InstWhile.        Instr ::= "while" Expr Block ;
 InstFor.          Instr ::= "for" Ident "from" Expr "to" Expr Block ;
 
+InstPrint.        Instr ::= "print" Expr ";" ;
+
 
 separator Instr "" ;
 
@@ -67,10 +69,13 @@ TypeFunUnit.      TypeVal ::= "(" [ArgType] ")" "->" TypeUnit ;
 ValArgType.       ArgType ::= TypeVal ;
 ConstArgType.     ArgType ::= "const" TypeVal ;
 RefArgType.       ArgType ::= "ref" TypeVal ;
+ConstRefArgType.  ArgType ::= "const" "ref" TypeVal ;
+RefConstArgType.  ArgType ::= "ref" "const" TypeVal ;
 
 separator ArgType "," ;
 
 ArgWithType.      Arg ::= Ident ":" ArgType ;
+ArgWithoutType.   Arg ::= Ident ;
 
 separator Arg "," ;
 

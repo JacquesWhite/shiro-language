@@ -3,39 +3,17 @@
 entrypoints       Program ;
 
 PProgram.         Program ::= [Instr] ;
-
--- Instruction types --------------------------------------------------------------
-
-InstrBlock.       Instr ::= Block ;
 InstBlock.        Block ::= "{" [Instr] "}" ;
-FunBlockRetVal.   BlockValFun ::= "{" [Instr] InstrRetVal "}" ;
-FunBlockRetUnit.  BlockUnitFun ::= Block ;
-
-InstrDecl.        Instr ::= Decl ";" ;
-InstrExpr.        Instr ::= Expr ";" ;
-
--- Declarations -------------------------------------------------------------------
-
-DeclFun.          Instr ::= "fun" Ident "(" [Arg] ")" ":" TypeVal BlockValFun ;
-DeclFunUnit.      Instr ::= "fun" Ident "(" [Arg] ")" ":" TypeUnit BlockUnitFun ;
-
-DeclVal.          Decl ::= "val" [DeclItem];
-DeclConst.        Decl ::= "const" [DeclItem];
-DeclIt.           DeclItem ::= Ident ":" TypeVal "=" Expr ;
-DeclItAutoType.   DeclItem ::= Ident "=" Expr ;
-
-separator         DeclItem "," ;
+separator Instr "";
 
 -- Instructions -------------------------------------------------------------------
-
-InstUnit.         Instr ::= ";" ;
 
 InstIncr.         Instr ::= Ident "++" ";";
 InstDecr.         Instr ::= Ident "--" ";";
 
 InstAss.          Instr ::= Ident "=" Expr ";";
 
-InstRetExpr.      InstrRetVal ::= "return" Expr ";";
+InstRetExpr.      InstrRetExpr ::= "return" Expr ";";
 InstRetUnit.      InstrRetUnit ::= "return" ";";
 
 InstCond.         Instr ::= CondStmt ;
@@ -49,11 +27,30 @@ InstFor.          Instr ::= "for" Ident "from" Expr "to" Expr Block ;
 InstPrint.        Instr ::= "print" Expr ";" ;
 
 
-separator Instr "" ;
+InstUnit.         Instr ::= ";" ;
+InstVal.          Instr ::= Expr ";" ;
+
+
+
+-- Declarations -------------------------------------------------------------------
+
+Decl.             Instr ::= Declr ;
+
+DeclFunVal.       Declr ::= "fun" Ident "(" [Param] ")" ":" TypeVal Block ;
+DeclFunUnit.      Declr ::= "fun" Ident "(" [Param] ")" ":" TypeVoid Block ;
+DeclFunUnitAuto.  Declr ::= "fun" Ident "(" [Param] ")" Block ;
+
+separator Param "," ;
+
+DeclVal.          Declr ::= "val" [DeclrItem] ";" ;
+DeclConst.        Declr ::= "const" [DeclrItem] ";" ;
+DeclItemType.     DeclrItem ::= Ident "=" Expr ":" TypeVal ;
+
+separator         DeclrItem "," ;
 
 -- Types ------------------------------------------------------------------------
 
-TypeVoid.         TypeUnit ::= "Unit" ;
+TypeUnit.         TypeVoid ::= "Unit" ;
 
 TypeInt.          TypeVal ::= "Int" ;
 TypeBool.         TypeVal ::= "Bool" ;
@@ -61,24 +58,21 @@ TypeString.       TypeVal ::= "String" ;
 
 separator TypeVal "," ;
 
--- Functions --------------------------------------------------------------------
+-- Function Types ---------------------------------------------------------------
 
-TypeFun.          TypeVal ::= "(" [ArgType] ")" "->" TypeVal ;
-TypeFunUnit.      TypeVal ::= "(" [ArgType] ")" "->" TypeUnit ;
+TypeFun.          TypeVal ::= "(" [ParamType] ")" "->" TypeVal ;
+TypeFunUnit.      TypeVal ::= "(" [ParamType] ")" "->" TypeVoid ;
 
-ValArgType.       ArgType ::= TypeVal ;
-ConstArgType.     ArgType ::= "const" TypeVal ;
-RefArgType.       ArgType ::= "ref" TypeVal ;
-ConstRefArgType.  ArgType ::= "const" "ref" TypeVal ;
-RefConstArgType.  ArgType ::= "ref" "const" TypeVal ;
+separator ParamType "," ;
 
-separator ArgType "," ;
+ParamDecl.              Param ::= Ident ":" ParamType;
 
-ArgWithType.      Arg ::= Ident ":" ArgType ;
-ArgWithoutType.   Arg ::= Ident ;
-
-separator Arg "," ;
-
+ParamTypeDesc.          ParamType ::= ParamModifier TypeVal ;
+ParamModifierConst.     ParamModifier ::= "const" ;
+ParamModifierRef.       ParamModifier ::= "ref" ;
+ParamModifierNone.      ParamModifier ::= ;
+ParamModifierConstRef.  ParamModifier ::= "const" "ref" ;
+ParamModifierRefConst.  ParamModifier ::= "ref" "const" ;
 
 -- Expressions ------------------------------------------------------------------
 
@@ -105,7 +99,8 @@ ExprOr.           Expr ::= Expr1 "||" Expr ;
 
 ExprTernary.      Expr ::= Expr1 "?" Expr1 ":" Expr ;
 
-ExprLambda.       Expr ::= "(" [Arg] ")" ":" TypeVal "=>" BlockValFun ;
+ExprLambdaVal.    Expr ::= "(" [Param] ")" ":" TypeVal "=>" Block ;
+ExprLambdaUnit.   Expr ::= "(" [Param] ")" ":" TypeVoid "=>" Block ;
 
 coercions  Expr 6 ;
 

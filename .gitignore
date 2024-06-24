@@ -1,2 +1,8 @@
 grammar/out/*
+Src/Shiro/*
+help
+.vscode
+Target
 
+typeCheckerTest
+interpreter

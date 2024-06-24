@@ -1,0 +1,1 @@
+TypeChecker exception at [Ln 1, Col 1]: Value '"'x'"' is not declared in the scope.

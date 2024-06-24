@@ -1,0 +1,22 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+val outerVar: Int = 5;
+
+fun outerFunction(): Int {
+  val outerVar: Int = 10;
+
+  fun innerFunction(): Int {
+    return outerVar * 2; // Accessing outerVar from the *closest* enclosing scope
+  }
+
+  return innerFunction();
+}
+
+val result: Int = outerFunction();
+assert(result == 20, "Nested function with static binding test failed");
+
+exit(0);

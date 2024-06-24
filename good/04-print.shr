@@ -1,0 +1,14 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+printInt(1);
+printString("\n");
+printBool(True);
+printString("\n");
+printString("Hello, world!");
+printString("\n");
+exit(0);

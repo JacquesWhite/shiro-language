@@ -1,0 +1,1 @@
+TypeChecker exception at [Ln 2, Col 1]: Function parameter is of type String but expected Int.

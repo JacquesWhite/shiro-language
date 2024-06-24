@@ -1,0 +1,12 @@
+
+val x: Int = 10;
+
+fun foo(y: ref Int) : Int {
+    fun boo() : Int {
+        return x;
+    }
+    return boo() + y;
+}
+
+const x: Int = 42;
+val y: Int = foo(x);

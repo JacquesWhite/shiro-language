@@ -1,0 +1,16 @@
+
+val x: Int = 42;
+fun foo() : Int {
+    if x > 0 {
+        return 10;
+    }
+
+    fun str() : String {
+        return "str";
+    }
+
+    return str();
+}
+
+return foo();
+

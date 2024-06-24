@@ -1,0 +1,3 @@
+val one : Int = 1;
+val zero : Int = one - 1;
+val undefined : Int = one / zero;

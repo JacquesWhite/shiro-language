@@ -1,0 +1,135 @@
+-- Programs ---------------------------------------------------------------------
+
+entrypoints       Program ;
+
+PProgram.         Program ::= [Instr] ;
+BlockInstr.       Block ::= "{" [Instr] "}" ;
+
+
+-- Types ------------------------------------------------------------------------
+
+UnitType.         TypeUnit ::= "Unit" ;
+
+TypeInt.          TypeVal ::= "Int" ;
+TypeBool.         TypeVal ::= "Bool" ;
+TypeString.       TypeVal ::= "String" ;
+
+-- Function Types ---------------------------------------------------------------
+
+TypeFun.          TypeVal ::= "(" [ParamType] ")" "->" TypeVal ;
+TypeFunUnit.      TypeVal ::= "(" [ParamType] ")" "->" TypeUnit ;
+TypeFunUnitAuto.  TypeVal ::= "(" [ParamType] ")" ;
+
+separator ParamType "," ;
+
+ParamDecl.              Param ::= Ident ":" ParamType;
+
+ParamTypeMutableCopy.   ParamType ::=                 TypeVal ;
+ParamTypeConstCopy.     ParamType ::= "const"         TypeVal ;
+ParamTypeMutableRef.    ParamType ::=         "ref"   TypeVal ;
+ParamTypeConstRef.      ParamType ::= "const" "ref"   TypeVal ;
+ParamTypeRefConst.      ParamType ::= "ref"   "const" TypeVal ;
+
+-- Operators --------------------------------------------------------------------
+
+OpIncr.           AssAddOneOp ::= "++" ;
+OpDecr.           AssAddOneOp ::= "--" ;
+
+OpPlus.           AddOp ::= "+" ;
+OpMinus.          AddOp ::= "-" ;
+OpTimes.          MulOp ::= "*" ;
+OpDiv.            MulOp ::= "/" ;
+OpMod.            MulOp ::= "%" ;
+
+OpLt.             RelOp ::= "<" ;
+OpLe.             RelOp ::= "<=" ;
+OpGt.             RelOp ::= ">" ;
+OpGe.             RelOp ::= ">=" ;
+
+OpEq.             RelOp ::= "==" ;
+OpNe.             RelOp ::= "!=" ;
+
+OpNot.            NotOp ::= "!" ;
+OpNeg.            NegOp ::= "-" ;
+
+OpAnd.            AndOp ::= "&&" ;
+OpOr.             OrOp  ::= "||" ;
+
+-- Expressions ------------------------------------------------------------------
+
+ExprValName.        Expr7 ::= Ident ;
+ExprLitInt.         Expr7 ::= Integer ;
+ExprLitTrue.        Expr7 ::= "True" ;
+ExprLitFalse.       Expr7 ::= "False" ;
+ExprLitString.      Expr7 ::= String ;
+
+-- Higher order functions
+ExprLambdaUnit.     Expr7 ::= "(" [Param] ")" ":" TypeUnit  "=>" Block ;
+ExprLambdaUnitAuto. Expr7 ::= "(" [Param] ")"               "=>" Block ;
+ExprLambdaVal.      Expr7 ::= "(" [Param] ")" ":" TypeVal   "=>" Block ;
+
+ExprApp.            Expr6 ::= Expr7 "(" [Expr] ")" ;
+ExprNeg.            Expr6 ::= NegOp Expr7 ;
+ExprNot.            Expr6 ::= NotOp Expr7 ;
+
+ExprMul.            Expr5 ::= Expr5 MulOp Expr6 ;
+
+ExprAdd.            Expr4 ::= Expr4 AddOp Expr5 ;
+
+ExprRel.            Expr3 ::= Expr3 RelOp Expr4 ;
+
+ExprAnd.            Expr2 ::= Expr3 AndOp Expr2 ;
+
+ExprOr.             Expr1 ::=  Expr2 OrOp  Expr1 ;
+
+ExprTernary.        Expr ::=  Expr1 "?" Expr1 ":" Expr ;
+
+coercions  Expr 7 ;
+
+separator Expr "," ;
+
+-- Declarations -------------------------------------------------------------------
+
+
+
+DeclFunVal.       Declr ::= "fun" Ident "(" [Param] ")" ":" TypeVal   Block ;
+DeclFunUnit.      Declr ::= "fun" Ident "(" [Param] ")" ":" TypeUnit  Block ;
+DeclFunUnitAuto.  Declr ::= "fun" Ident "(" [Param] ")"               Block ;
+
+separator Param "," ;
+
+DeclVal.          Declr ::= "val"   [DeclrItem] ";" ;
+DeclConst.        Declr ::= "const" [DeclrItem] ";" ;
+DeclItemType.     DeclrItem ::= Ident ":" TypeVal "=" Expr ;
+
+separator         DeclrItem "," ;
+
+-- Instructions -------------------------------------------------------------------
+InstBlock.        Instr ::= Block ;
+
+InstExpr.         Instr ::= Expr ";" ;
+
+InstDecl.         Instr ::= Declr ;
+
+InstAssAddOne.    Instr ::= Ident AssAddOneOp ";";
+
+InstAss.          Instr ::= Ident "=" Expr ";";
+
+InstRetExpr.      Instr ::= "return" Expr ";";
+InstRetUnit.      Instr ::= "return" ";";
+
+InstCond.         Instr ::= CondInstr ;
+CondIf.           CondInstr ::= "if" Expr Block ;
+CondIfElse.       CondInstr ::= "if" Expr Block "else" Block ;
+CondIfElseIf.     CondInstr ::= "if" Expr Block "else" CondInstr ;
+
+InstWhile.        Instr ::= "while" Expr Block ;
+InstFor.          Instr ::= "for" Ident "from" Expr "to" Expr Block ;
+
+separator Instr "";
+
+
+-- Comments ---------------------------------------------------------------------
+
+comment         "//" ;
+comment         "/*" "*/" ;

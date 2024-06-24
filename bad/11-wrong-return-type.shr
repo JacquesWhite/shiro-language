@@ -1,0 +1,6 @@
+fun foo() : String {
+    return 10;
+}
+
+return foo();
+

@@ -1,0 +1,28 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+val i: Int = 10;
+val b: Bool = True;
+val s: String = "hello";
+
+// Type compatibility within expressions
+val j: Int = i + 5;
+// val k: Int = i + b; // Should fail to compile: type mismatch
+
+// Type compatibility in assignments
+// i = b; // Should fail to compile: type mismatch
+// s = 15; // Should fail to compile: type mismatch
+
+// Type compatibility in function calls
+fun addInts(a: const Int, b: const Int): Int {
+  return a + b;
+}
+
+val sum: Int = addInts(i, j);
+// addInts(i, s); // Should fail to compile: type mismatch
+
+exit(0);

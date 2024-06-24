@@ -1,0 +1,7 @@
+
+fun foo() : Int {
+    val x : Int = 0;
+    return 42;
+}
+
+val y: Int = x;

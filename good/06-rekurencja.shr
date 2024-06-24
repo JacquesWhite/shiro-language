@@ -1,0 +1,19 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+fun factorial(n: const Int): Int {
+  if n == 0 {
+    return 1;
+  } else {
+    return n * factorial(n - 1);
+  }
+}
+
+assert(factorial(0) == 1, "Factorial test 1 failed");
+assert(factorial(1) == 1, "Factorial test 2 failed");
+assert(factorial(5) == 120, "Factorial test 3 failed");
+exit(0);

@@ -1,0 +1,24 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+// Test for loop
+val cnt: Int = 0;
+val iTest: Int = 1;
+for i from 1 to 5 {
+  cnt = cnt + i;
+  assert(iTest == i, "for test failed");
+  iTest++;
+}
+assert(1 + 2 + 3 + 4 + 5 == cnt, "for test failed");
+
+// Test const keyword
+const x: Int = 10;
+// x = 5; // Should fail to compile: cannot assign to const variable
+
+assert(x == 10, "Const variable test failed");
+
+exit(0);

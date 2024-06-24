@@ -1,0 +1,1 @@
+val x: Int = "abc", y: String = 123;

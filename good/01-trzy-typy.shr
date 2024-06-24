@@ -1,0 +1,17 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg);
+    exit(1);
+  }
+}
+
+
+val i: Int = 1;
+val b: Bool = True;
+val s: String = "hello";
+
+assert(i == 1, "Integer type test failed");
+assert(b, "Boolean type test failed");
+assert(s == "hello", "String type test failed");
+
+exit(0);

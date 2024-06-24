@@ -1,0 +1,19 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+fun add(a: const Int, b: const Int): Int {
+  return a + b;
+}
+
+fun subtract(a: const Int, b: const Int): Int {
+  return a - b;
+}
+
+assert(add(1, 2) == 3, "Function 'add' test failed");
+assert(subtract(5, 3) == 2, "Function 'subtract' test failed");
+
+exit(0);

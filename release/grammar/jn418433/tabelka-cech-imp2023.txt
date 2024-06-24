@@ -21,3 +21,22 @@
   18 (3) (generatory)
 
 Razem: 30|31
+
+
+
+- three types
+- constants, variables, assignment
+- static typing
+- print
+
+- literals, arithmetic, comparisons
+- if, else, ternary operator
+- while, for
+- functions, recursion
+- value-returning functions
+- parameter passing via variable / by value copy
+- overriding and static binding
+- nested functions with static binding
+- higher-order functions, anonymous functions, closures
+
+- runtime error handling

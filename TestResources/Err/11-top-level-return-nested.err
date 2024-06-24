@@ -1,0 +1,2 @@
+TypeChecker exception at [Ln 1, Col 1]: Top-level program cannot return value.
+(Possibly wanted to use exit: (Int) -> Unit)

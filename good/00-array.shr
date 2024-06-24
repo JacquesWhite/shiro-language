@@ -1,0 +1,92 @@
+
+
+fun arrayEmpty(n: ref Int) : Int {
+    return 0;
+}
+
+fun arrayInit(n: ref Int): Int {
+    return n;
+}
+
+fun arrayGet(arr: (ref Int) -> Int, i: Int) : Int {
+    return arr(i);
+}
+
+fun arraySet(
+    arr: (ref Int) -> Int, 
+    i: Int, v: Int
+): (ref Int) -> Int {
+    return (j: ref Int): Int => {
+        if (i == j) {
+            return v;
+        } else {
+            return arr(j);
+        }
+    };
+}
+
+fun map(
+    arr: (ref Int) -> Int,
+    f: (const Int) -> Int
+): (ref Int) -> Int {
+    return (i: ref Int): Int => {
+        return f(arr(i));
+    };
+}
+
+
+// =============================================================================
+
+const TREE_SIZE: Int = 10;
+
+const visited: (ref Int) -> Int = arrayEmpty;
+val treeValue: (ref Int) -> Int = map(arrayInit, (i: const Int): Int => { return i % 2; });
+
+// ok
+const parent: (const Int) -> Int = (n: const Int): Int => {
+    if n == 1 { return -1; }
+    return n / 2;
+};
+
+// ok
+const leftChild: (const Int) -> Int = (n: const Int): Int => {
+    if 2 * n > TREE_SIZE { return -1; }
+    return 2 * n;
+};
+
+// ok
+const rightChild: (const Int) -> Int = (n: const Int): Int => {
+    if 2 * n + 1 > TREE_SIZE { return -1; }
+    return 2 * n + 1;
+};
+
+// ok
+treeValue = arraySet(treeValue, 1, 1);
+
+// =============================================================================
+
+// ok
+fun printTree(treeNode: Int) {
+    if (treeNode == -1) {
+        return;
+    }
+    printString("Node ");
+    printInt(treeNode);
+    printString(" has value ");
+    printInt(treeValue(treeNode));
+    printString("\n");
+    printTree(leftChild(treeNode));
+    printTree(rightChild(treeNode));
+}
+
+//         1
+//        /  \
+//       2    3
+//      / \   /\
+//     4   5 6  7
+//    / \ /   
+//   8  9 10
+
+
+
+printTree(1);

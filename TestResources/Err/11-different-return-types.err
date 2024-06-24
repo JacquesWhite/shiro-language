@@ -1,0 +1,1 @@
+TypeChecker exception at [Ln 12, Col 5]: Tried to return value of type Int but in the same return scope tried to return another value of typeString.

@@ -1,0 +1,23 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+// Higher-order function: Accepts a function as an argument
+fun apply(f: const (const Int) -> Int, n: const Int): Int {
+  return f(n);
+}
+
+// Lambda expression: An anonymous function
+const square: (const Int) -> Int = (x:const Int):Int => { return x * x; };
+
+// Closure: Lambda captures 'factor' from its enclosing scope
+const factor: Int = (): Int =>{ return 3; }();
+const multiplyByFactor: (const Int) -> Int = (x: const Int): Int => { return x * factor; };
+
+assert(apply(square, 5) == 25, "Higher-order function test failed");
+assert(multiplyByFactor(4) == 12, "Closure test failed");
+
+exit(0);

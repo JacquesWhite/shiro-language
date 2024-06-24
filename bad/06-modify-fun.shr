@@ -1,0 +1,6 @@
+
+fun foo(x: Int) : Int {
+    return x + 42;
+}
+
+foo = (x: Int): Int => { return x; };

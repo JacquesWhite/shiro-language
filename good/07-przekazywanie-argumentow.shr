@@ -1,0 +1,25 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+fun incrementByValue(n: const Int): Int {
+  return n + 1;
+}
+
+fun incrementByReference(n: ref Int) {
+  n = n + 1;
+}
+
+val a: Int = 1;
+val b: Int = incrementByValue(a);
+assert(a == 1, "Pass-by-value test 1 failed");
+assert(b == 2, "Pass-by-value test 2 failed");
+
+val c: Int = 1;
+incrementByReference(c);
+assert(c == 2, "Pass-by-reference test failed");
+
+exit(0);

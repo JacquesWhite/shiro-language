@@ -1,0 +1,54 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+// Simulates an array of size 'size' initialized with 'initialValue'
+fun createArray(size: const Int, initialValue: const Int): (const Int) -> Int {
+  return (i: const Int): Int => { 
+    assert(i >= -1 && i < size, "Index out of bounds exception.");
+    return i == -1? size : initialValue;
+  };
+}
+
+// Sets the value at a given index in the simulated array
+fun setArrayValue(arr: ref (const Int) -> Int, index: const Int, value: const Int) {
+  assert(index >= 0 && index < arr(-1), "Index out of bounds exception.");
+  const old: (const Int) -> Int = arr;
+  arr = (i: const Int): Int => {
+    if i == index {
+      return value;
+    } else {
+      return old(i);
+    }
+  };
+}
+
+// Example usage:
+val arr: (const Int) -> Int = createArray(5, 0); // Creates an array of size 5 initialized with 0s
+
+// should throw exceptions
+// arr(-2);
+// arr(5); 
+// setArrayValue(arr, 6, 1);
+// setArrayValue(arr, -1, 1);
+
+
+assert(arr(-1) == 5, "Array simulation test failed (size)");
+
+setArrayValue(arr, 2, 10); // Sets the value at index 2 to 10
+
+val value: Int = arr(2); // Retrieves the value at index 2
+
+assert(value == 10, "Array simulation test failed (value)");
+for i from 0 to 4 {
+  setArrayValue(arr, i, -i); 
+}
+
+for i from 0 to 4 {
+  assert(arr(i) == -i, "Array simulation test failed (value)");
+}
+
+exit(0);

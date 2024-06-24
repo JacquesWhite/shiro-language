@@ -1,0 +1,1 @@
+TypeChecker exception at [Ln 1, Col 5]: Cannot assign expression of type Int to 's: String'.

@@ -1,0 +1,53 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+
+val val1: Int = 5;
+fun fun1(): Int {
+  val val1: Int = 10;
+
+  fun innerfun1(): Int {
+    return val1 * 2;
+  }
+
+  return innerfun1();
+}
+val result1: Int = fun1();
+assert(result1 == 20, "Shadowing local val by inner function val test failed");
+
+
+// shadowing param by local val
+
+fun fun2(val2: Int): Int {
+  val val2: Int = 10;
+  return val2;
+}
+
+val result2: Int = fun2(5);
+assert(result2 == 10, "Shadowing param by local val test failed");
+
+// shadownig outer val by local val
+
+val val3: Int = 20;
+fun fun3(): Int {
+  val val3: Int = 10;
+  return val3;
+}
+val result3: Int = fun3();
+
+assert(result3 == 10, "Shadowing outer val by local val test failed");
+
+// shadowing outer val by param
+
+val val4: Int = 20;
+fun fun4(val4: Int): Int {
+  return val4;
+}
+
+val result4: Int = fun4(10);
+
+assert(result4 == 10, "Shadowing outer val by param test failed");

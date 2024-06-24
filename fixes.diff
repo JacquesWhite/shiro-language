@@ -1,0 +1,1097 @@
+diff --git a/Makefile b/Makefile
+index cce5b7c..4c012d2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -12,73 +12,95 @@ ALEX_OPTS  = --ghc
+ # Directories
+ SRC_DIR = Src
+ GHC_TARGET_DIR = Target
+-TEST_DIR = Test
+-
++GRAMMAR_DIR = Grammar
++TESTCASES_BAD_DIR = bad
++TESTCASES_GOOD_DIR = good
++TEST_RESOURCES_DIR = TestResources
+ 
+ BNFC_DIR = $(SRC_DIR)/Shiro
+ TYPECHECKER_DIR = $(SRC_DIR)/TypeChecker
+ TYPECHECKER_TEST_DIR = $(TYPECHECKER_DIR)/Test
+ EVALUATOR_DIR = $(SRC_DIR)/Evaluator
++GRAMMAR_DIR = Grammar
+ 
+ 
+ # Files
+-BNFC_GOALS =\
+-	$(SRC_DIR)/Shiro/Abs.hs\
+-	$(SRC_DIR)/Shiro/Print.hs\
+-	$(SRC_DIR)/Shiro/Lex.x\
+-	$(SRC_DIR)/Shiro/Par.y
+-
+-TYPECHECKER_SRCS =\
+-	$(TYPECHECKER_DIR)/Environment.hs\
+-	$(TYPECHECKER_DIR)/Operators.hs\
+-	$(TYPECHECKER_DIR)/Params.hs\
+-	$(TYPECHECKER_DIR)/TypeChecker.hs\
+-
+-TYPECHECKER_TEST_SRCS =\
+-	$(TYPECHECKER_SRCS)\
+-	$(TYPECHECKER_TEST_DIR)/TypeCheckerExceptionsTest.hs
+-
+-INTERPRETER_SRCS =\
+-	$(EVALUATOR_DIR)/Environment.hs\
+-	$(EVALUATOR_DIR)/StdLib.hs\
+-	$(EVALUATOR_DIR)/Evaluator.hs\
++GRAMMAR_FILE = $(GRAMMAR_DIR)/Shiro.cf
++
++
++ABS_SYNTAX_SRC = $(BNFC_DIR)/Abs.hs
++PARSER_SRC = $(BNFC_DIR)/Par.hs
++LEXER_SRC = $(BNFC_DIR)/Lex.hs
++
++TYPECHECKER_TEST_SRC = $(TYPECHECKER_TEST_DIR)/TypeCheckerExceptionsTest.hs
++TYPECHECKER_SRCS = $(wildcard $(SRC_DIR)/TypeChecker/*.hs)
++SRC_COMMON_SRCS = $(wildcard $(SRC_DIR)/Common/*.hs)
++SRC_EVALUATOR_SRCS = $(wildcard $(SRC_DIR)/Evaluator/*.hs)
++
++
++INTERPRETER_SRC =\
+ 	$(SRC_DIR)/Interpreter.hs
+ 
+ # Phony targets
+-.PHONY : all typeCheckerTest typeChecker parserTest clean cleanghc cleanbnfc cleantest
++.PHONY : all typeChecker release clean cleantarget cleaninterpreter cleantest cleantypechecker
+ 
+-# Default goal.
++# Default goal
+ all : interpreter
+ 
+-# Src/Shiro/Test : Src/Shiro/Abs.hs Src/Shiro/Lex.hs Src/Shiro/Par.hs Src/Shiro/Print.hs Src/Shiro/Test.hs
+-# 	$(GHC) $(GHC_OPTS) $@
+-
+-interpreter : $(INTERPRETER_SRCS) $(SRC_DIR)/Shiro/Par.hs
++interpreter : $(INTERPRETER_SRC) $(SRC_EVALUATOR_SRCS) $(TYPECHECKER_SRCS) $(SRC_COMMON_SRCS) $(PARSER_SRC) $(ABS_SYNTAX_SRC) 
+ 	$(GHC) $(GHC_OPTS) -odir $(GHC_TARGET_DIR) -hidir $(GHC_TARGET_DIR) $(SRC_DIR)/Interpreter -o interpreter
+ 
+-typeCheckerTest : $(TYPECHECKER_TEST_SRCS)
+-	$(GHC) $(GHC_OPTS) -odir $(GHC_TARGET_DIR) -hidir $(GHC_TARGET_DIR) $(TYPECHECKER_TEST_DIR)/TypeCheckerExceptionsTest.hs -o typeCheckerTest
++typeCheckerTest : $(TYPECHECKER_TEST_SRC) $(TYPECHECKER_SRCS) $(SRC_COMMON_SRCS) $(PARSER_SRC) $(ABS_SYNTAX_SRC)
++	$(GHC) $(GHC_OPTS) -odir $(GHC_TARGET_DIR) -hidir $(GHC_TARGET_DIR) $< -o typeCheckerTest
+ 
+-typeChecker : $(SRC_DIR)/Shiro/Par.hs
++typeChecker : $(PARSER_SRC)
+ 
+-parserTest : $(SRC_DIR)/Shiro/Test
+-$(SRC_DIR)/Shiro/Test : $(SRC_DIR)/Shiro/Par.hs
+-	$(GHC) $(GHC_OPTS) -odir $(GHC_TARGET_DIR) -hidir $(GHC_TARGET_DIR) $(SRC_DIR)/Shiro/Test -o parserTest
++PARSER_TEST_SRC = $(BNFC_DIR)/Test.hs
++parserTest : $(PARSER_TEST_SRC) $(PARSER_SRC) $(LEXER_SRC) $(ABS_SYNTAX_SRC)
++	$(GHC) $(GHC_OPTS) -odir $(GHC_TARGET_DIR) -hidir $(GHC_TARGET_DIR) $< -o parserTest
+ 
+-$(SRC_DIR)/Shiro/Par.hs : $(SRC_DIR)/Shiro/Par.y $(SRC_DIR)/Shiro/Lex.hs $(BNFC_GOALS)
++PARSER_PREREQUISITE = $(BNFC_DIR)/Par.y
++$(PARSER_SRC) : $(PARSER_PREREQUISITE) $(BNFC_GOALS)
+ 	$(HAPPY) $(HAPPY_OPTS) $<
+ 
+-$(SRC_DIR)/Shiro/Lex.hs : $(SRC_DIR)/Shiro/Lex.x
++LEXER_REREQUISITE = $(BNFC_DIR)/Lex.x
++$(LEXER_SRC) : $(LEXER_REREQUISITE)
+ 	$(ALEX) $(ALEX_OPTS) $<
+ 
+-$(BNFC_GOALS) : Grammar/Shiro.cf
+-	$(BNFC) $(BNFC_OPTS) -p Src  Grammar/Shiro.cf
+-
+-
++$(ABS_SYNTAX_SRC) : $(LEXER_SRC) 
+ 
++BNFC_GOALS =\
++	$(ABS_SYNTAX_SRC)\
++	$(LEXER_REREQUISITE)\
++	$(PARSER_PREREQUISITE)\
++	$(PARSER_TEST_SRC)
++$(BNFC_GOALS) : $(GRAMMAR_FILE)
++	$(BNFC) $(BNFC_OPTS) -p $(SRC_DIR) $<
++
++
++RELEASE_DIR = release
++STUDENT_ID = jn418433
++RELEASE_TMP_DIR = $(RELEASE_DIR)/$(STUDENT_ID)
++
++release : clean
++	rm -rf $(RELEASE_TMP_DIR)
++	rm -f $(RELEASE_FILE)
++	mkdir -p $(RELEASE_TMP_DIR)
++	cp -r $(SRC_DIR) $(RELEASE_TMP_DIR)
++	cp -r $(GRAMMAR_DIR) $(RELEASE_TMP_DIR)
++	cp -r $(TESTCASES_BAD_DIR) $(RELEASE_TMP_DIR)
++	cp -r $(TESTCASES_GOOD_DIR) $(RELEASE_TMP_DIR)
++	cp -r $(TEST_RESOURCES_DIR) $(RELEASE_TMP_DIR)
++	cp Makefile $(RELEASE_TMP_DIR)
++	cp README.md $(RELEASE_TMP_DIR)
++	cp test.sh $(RELEASE_TMP_DIR)
++	cd $(RELEASE_DIR) && zip -r $(STUDENT_ID).zip $(STUDENT_ID)
++	rm -rf $(RELEASE_TMP_DIR)
++
++$(RELEASE_FILE) : Grammar/Shiro.cf $(BNFC_GOALS) 
+ 
+ # Rules for cleaning generated files.
+-clean : cleantarget cleantest cleaninterpreter cleantypechecker 
++clean : cleantarget cleantest cleaninterpreter cleanparsertest cleantypechecker 
+ 
+ cleantarget :
+ 	-rm -rf $(GHC_TARGET_DIR)
+@@ -89,5 +111,8 @@ cleaninterpreter :
+ cleantest :
+ 	-rm -rf typeCheckerTest
+ 
++cleanparsertest :
++	-rm -rf parserTest
++
+ cleantypechecker :
+ 	-rm -rf $(BNFC_DIR)
+diff --git a/Src/Common/Env.hs b/Src/Common/Environment.hs
+similarity index 95%
+rename from Src/Common/Env.hs
+rename to Src/Common/Environment.hs
+index 7e0e025..a2ba456 100644
+--- a/Src/Common/Env.hs
++++ b/Src/Common/Environment.hs
+@@ -2,7 +2,7 @@
+ {-# LANGUAGE RankNTypes #-}
+ {-# LANGUAGE TypeFamilies #-}
+ 
+-module Src.Common.Env where
++module Src.Common.Environment where
+ 
+ import Data.Kind
+ import Data.Map (Map)
+diff --git a/Src/Common/Exceptions.hs b/Src/Common/Exceptions.hs
+index 340e2a1..3f39f20 100644
+--- a/Src/Common/Exceptions.hs
++++ b/Src/Common/Exceptions.hs
+@@ -10,14 +10,16 @@ type IOWithExceptions = ExceptT ExceptionHolder IO
+ data ExceptionHolder
+     = ParserException String
+     | TypeCheckerException BNFC'Position TypeCheckerExceptionType
+-    | RuntimeException BNFC'Position RuntimeType
++    | RuntimeException BNFC'Position RuntimeExceptionType
+     | ControlledExit Int
+ 
+ instance Show ExceptionHolder where
+     show (ParserException exception) = "Parser exception: " ++ show exception
+     show (TypeCheckerException pos exceptionT) = concat ["TypeChecker exception at ", showPos pos, ": ", show exceptionT]
+     show (RuntimeException pos exceptionT) = concat ["Runtime exception at ", showPos pos, ": ", show exceptionT]
+-    show (ControlledExit statusCode) = "Program exited with code " ++ show statusCode
++    show (ControlledExit statusCode)
++        | statusCode /= 0 = concat ["Program exited with code ", show statusCode, "."]
++        | otherwise = ""
+ 
+ showPos :: BNFC'Position -> String
+ showPos (BNFC'Position line column) = concat ["[Ln ", show line, ", Col ", show column, "]"]
+@@ -55,7 +57,7 @@ data TypeCheckerExceptionType
+ instance Show TypeCheckerExceptionType where
+     show ExptMathDivisionByZero = "Division by zero is not allowed."
+     show ExptMathModuloZero = "Modulo zero is not defined."
+-    show ExptTopLevelProgramReturns = "Top-level program cannot return value.\n(Possibly wanted to use exit: (Int) -> Unit."
++    show ExptTopLevelProgramReturns = "Top-level program cannot return value.\n(Possibly wanted to use exit: (Int) -> Unit)"
+     show (ExptValNotDeclared ident) = concat ["Value ", showIdent ident, " is not declared in the scope."]
+     show (ExptValAlreadyDeclared i) = concat ["Value ", showIdent i, " was already declared in its scope."]
+     show (ExptFunCallNotCallableType t) = concat ["Tried to use function application on the non-callable expression of type ", show t, "."]
+@@ -91,12 +93,12 @@ instance Show TypeCheckerExceptionType where
+     show (ExptWrongTypeForRangeExpr t) = concat ["For range bound expression should be of type Int but got ", show t, "."]
+     show (ExptTernaryExprsOfDifferentType t1 t2) = concat ["Ternary operator expressions should be of the same type but got ", show t1, " and ", show t2, "."]
+ 
+-data RuntimeType
++data RuntimeExceptionType
+     = ExptMathDivisionByZeroRuntime
+     | UnexpectedExceptionRuntime
+     deriving (Eq)
+ 
+-instance Show RuntimeType where
++instance Show RuntimeExceptionType where
+     show ExptMathDivisionByZeroRuntime = "Division by zero is not allowed."
+     show UnexpectedExceptionRuntime = "Got unexpected runtime exception."
+ 
+diff --git a/Src/Common/StdLib.hs b/Src/Common/StdLib.hs
+index b7e8fea..9dbb7a7 100644
+--- a/Src/Common/StdLib.hs
++++ b/Src/Common/StdLib.hs
+@@ -2,7 +2,7 @@ module Src.Common.StdLib where
+ import Src.Shiro.Abs
+ import Src.Common.Types
+ import Src.Evaluator.Types
+-import Src.Common.Env
++import Src.Common.Environment
+ 
+ data StdFun = StdFun
+     { funIdent :: Ident
+diff --git a/Src/Evaluator/Environment.hs b/Src/Evaluator/Environment.hs
+index f28ada6..c693496 100644
+--- a/Src/Evaluator/Environment.hs
++++ b/Src/Evaluator/Environment.hs
+@@ -6,7 +6,7 @@ module Src.Evaluator.Environment where
+ import Control.Monad.Except
+ import Control.Monad.Reader
+ import Control.Monad.State
+-import Src.Common.Env
++import Src.Common.Environment
+ import Src.Common.Exceptions
+ import Src.Shiro.Abs
+ import Src.Evaluator.Types
+diff --git a/Src/Evaluator/Evaluator.hs b/Src/Evaluator/Evaluator.hs
+index 0c5a269..d80a045 100644
+--- a/Src/Evaluator/Evaluator.hs
++++ b/Src/Evaluator/Evaluator.hs
+@@ -6,7 +6,7 @@ import Control.Monad.Except
+ import Control.Monad.Reader
+ import Control.Monad.State
+ import Data.Maybe
+-import Src.Common.Env
++import Src.Common.Environment
+ import Src.Common.Exceptions
+ import Src.Common.Types
+ import Src.Evaluator.Environment
+diff --git a/Src/Evaluator/StdLib.hs b/Src/Evaluator/StdLib.hs
+index 0af15fb..aea1993 100644
+--- a/Src/Evaluator/StdLib.hs
++++ b/Src/Evaluator/StdLib.hs
+@@ -1,6 +1,6 @@
+ module Src.Evaluator.StdLib where
+ 
+-import Src.Common.Env
++import Src.Common.Environment
+ import Src.Common.StdLib
+ import Src.Evaluator.Store
+ import Src.Evaluator.Types
+diff --git a/Src/Evaluator/Types.hs b/Src/Evaluator/Types.hs
+index e2fcf67..5195498 100644
+--- a/Src/Evaluator/Types.hs
++++ b/Src/Evaluator/Types.hs
+@@ -6,7 +6,7 @@ module Src.Evaluator.Types where
+ import Control.Monad.Except
+ import Src.Common.Exceptions
+ import Control.Monad.Reader
+-import Src.Common.Env
++import Src.Common.Environment
+ import Control.Monad.State
+ import qualified Data.Map as Map
+ import Src.Shiro.Abs
+diff --git a/Src/Interpreter.hs b/Src/Interpreter.hs
+index 0a07b91..350c802 100644
+--- a/Src/Interpreter.hs
++++ b/Src/Interpreter.hs
+@@ -1,5 +1,6 @@
+ module Main where
+ 
++import System.IO
+ import System.Environment (getArgs)
+ import System.Exit (ExitCode (ExitFailure), exitFailure, exitSuccess, exitWith)
+ 
+@@ -8,7 +9,6 @@ import Src.Common.Exceptions (
+  )
+ import Src.Evaluator.Evaluator (evalProgram)
+ import Src.Shiro.Abs
+-import Src.Shiro.Skel ()
+ import Src.TypeChecker.TypeChecker (ParserM, parseProgram, typeCheck)
+ 
+ preProcessCode :: String -> ParserM Program
+@@ -19,16 +19,19 @@ preProcessCode code = do
+         Left parserException -> Left parserException
+         Right _ -> Right program
+ 
++ignoreR :: a -> [Char]
++ignoreR _ = ""
++
+ run :: String -> IO ()
+ run code = do
+     let preProcessResult = preProcessCode code
+     case preProcessResult of
+         Left parserException -> do
+-            print parserException
++            hPutStr stderr $ show parserException
+             exitFailure
+         Right program -> do
+             evaluatorResult <- evalProgram program
+-            putStrLn . either show show $ evaluatorResult
++            hPutStr stderr . either show ignoreR $ evaluatorResult
+             case evaluatorResult of
+                 Left (ControlledExit 0) -> exitSuccess
+                 Left (ControlledExit statusCode) -> exitWith $ ExitFailure statusCode
+@@ -37,7 +40,7 @@ run code = do
+ 
+ printUsage :: IO ()
+ printUsage = do
+-    putStrLn $
++    hPutStr stderr $
+         unlines
+             [ "USAGE:"
+             , "    ./interpreter [FILE]"
+diff --git a/Src/TypeChecker/Environment.hs b/Src/TypeChecker/Environment.hs
+index ae9b3f0..bbc26af 100644
+--- a/Src/TypeChecker/Environment.hs
++++ b/Src/TypeChecker/Environment.hs
+@@ -6,7 +6,7 @@ module Src.TypeChecker.Environment where
+ import Control.Monad.Except
+ import Control.Monad.State
+ import qualified Data.Map as Map
+-import Src.Common.Env
++import Src.Common.Environment
+ import Src.Common.Exceptions
+ import Src.Common.Types
+ import Src.Shiro.Abs
+diff --git a/Src/TypeChecker/Test/TypeCheckerExceptionsTest.hs b/Src/TypeChecker/Test/TypeCheckerExceptionsTest.hs
+index 093879f..7dbac22 100644
+--- a/Src/TypeChecker/Test/TypeCheckerExceptionsTest.hs
++++ b/Src/TypeChecker/Test/TypeCheckerExceptionsTest.hs
+@@ -8,25 +8,27 @@ type TestCase = (String, TypeCheckerExceptionType)
+ 
+ testCases :: [TestCase]
+ testCases =
+-    [ ("zero-div", ExptMathDivisionByZero)
+-    , ("modify-const", ExptModifyConst (Ident "x") ValTypeInt)
+-    , ("inline-redeclaration", ExptValAlreadyDeclared (Ident "x"))
+-    , ("inline-wrong-type-assignment", ExptModifyWrongType (Ident "x") ValTypeInt ValTypeString)
+-    , ("wrong-type-const", ExptModifyWrongType (Ident "s") ValTypeString ValTypeInt)
+-    , ("wrong-type-val", ExptModifyWrongType (Ident "s") ValTypeString ValTypeInt)
+-    , ("assign-undefined-val", ExptValNotDeclared (Ident "x"))
+-    , ("op-on-undefined-val", ExptValNotDeclared (Ident "x"))
+-    , ("bool-to-int-assignment", ExptModifyWrongType (Ident "x") ValTypeInt ValTypeBool)
+-    , ("bool-to-string-assignment", ExptModifyWrongType (Ident "x") ValTypeString ValTypeBool)
+-    , ("top-level-return", ExptTopLevelProgramReturns)
+-    , ("top-level-return-nested", ExptTopLevelProgramReturns)
+-    , ("val-in-fun", ExptValNotDeclared (Ident "x"))
+-    , ("different-return-types", ExptFunReturnDifferentTypes ValTypeInt ValTypeString)
+-    , ("wrong-return-type", ExptFunReturnWrongType (Ident "foo") ValTypeInt ValTypeString)
+-    , ("const-mutable-pass", ExptFunParamConstMutablePass)
+-    , ("wrong-type-lambda", ExptModifyWrongType (Ident "f") (ValTypeFun [(ValTypeInt, ValConst, ValReference)] ValTypeInt) (ValTypeFun [(ValTypeInt, ValMutable, ValReference)] ValTypeInt))
+-    , ("modify-fun", ExptModifyFun (Ident "foo") (ValTypeFun [(ValTypeInt, ValMutable, ValCopy)] ValTypeInt))
+-    , ("modify-const-param", ExptModifyConst (Ident "x") ValTypeInt)
++    [ ("02-op-on-undefined-val", ExptValNotDeclared (Ident "x"))
++    , ("02-zero-div", ExptMathDivisionByZero)
++    , ("03-assign-undefined-val", ExptValNotDeclared (Ident "x"))
++    , ("03-bool-to-int-assignment", ExptModifyWrongType (Ident "x") ValTypeInt ValTypeBool)
++    , ("03-bool-to-string-assignment", ExptModifyWrongType (Ident "x") ValTypeString ValTypeBool)
++    , ("03-inline-redeclaration", ExptValAlreadyDeclared (Ident "x"))
++    , ("03-wrong-type-val", ExptModifyWrongType (Ident "s") ValTypeString ValTypeInt)
++    , ("03-inline-wrong-type-assignment", ExptModifyWrongType (Ident "x") ValTypeInt ValTypeString)
++    , ("04-wrong-type-printInt-arg", ExptFunParamWrongType ValTypeString ValTypeInt)
++    , ("05-wrong-type-condition", ExptWrongTypeCondExpr ValTypeInt)
++    , ("06-09-val-in-fun", ExptValNotDeclared (Ident "x"))
++    , ("06-modify-fun", ExptModifyFun (Ident "foo") (ValTypeFun [(ValTypeInt, ValMutable, ValCopy)] ValTypeInt))
++    , ("07-08-modify-const-param", ExptModifyConst (Ident "x") ValTypeInt)
++    , ("07-const-mutable-pass", ExptFunParamConstMutablePass)
++    , ("08-modify-const", ExptModifyConst (Ident "x") ValTypeInt)
++    , ("08-wrong-type-const", ExptModifyWrongType (Ident "s") ValTypeString ValTypeInt)
++    , ("11-different-return-types", ExptFunReturnDifferentTypes ValTypeInt ValTypeString)
++    , ("11-top-level-return-nested", ExptTopLevelProgramReturns)
++    , ("11-top-level-return", ExptTopLevelProgramReturns)
++    , ("11-wrong-return-type", ExptFunReturnWrongType (Ident "foo") ValTypeInt ValTypeString)
++    , ("17-wrong-type-lambda", ExptModifyWrongType (Ident "f") (ValTypeFun [(ValTypeInt, ValConst, ValReference)] ValTypeInt) (ValTypeFun [(ValTypeInt, ValMutable, ValReference)] ValTypeInt))
+     ]
+ 
+ testFile :: TestCase -> IO ()
+@@ -41,12 +43,12 @@ testFile (fileName, expectedException) = do
+                     | actualException == expectedException ->
+                         putStrLn $ "Success " ++ "\"" ++ fileName ++ "\""
+                 _ -> do
+-                    putStrLn $ "aTypeChecker test error in " ++ show fileName
++                    putStrLn $ "TypeChecker test error in " ++ show fileName
+                     putStrLn $ "Expected exception: " ++ show expectedException
+                     putStrLn $ "Actual exception: " ++ show parserException
+                     exitFailure
+         Right _ -> do
+-            putStrLn $ "bTypeChecker test error in " ++ show fileName
++            putStrLn $ "TypeChecker test error in " ++ show fileName
+             putStrLn $ "Expected: " ++ show expectedException
+             putStrLn "Got: No exception"
+             exitFailure
+diff --git a/Src/TypeChecker/TypeChecker.hs b/Src/TypeChecker/TypeChecker.hs
+index edff6c7..e89b549 100644
+--- a/Src/TypeChecker/TypeChecker.hs
++++ b/Src/TypeChecker/TypeChecker.hs
+@@ -9,7 +9,7 @@ import Src.Shiro.Abs
+ import Src.TypeChecker.Types
+ 
+ import Data.Functor ((<&>))
+-import Src.Common.Env
++import Src.Common.Environment
+ import Src.Common.Types
+ import Src.Shiro.Par
+ import Src.TypeChecker.Environment
+diff --git a/TestResources/Err/00-array.err b/TestResources/Err/00-array.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/01-trzy-typy.err b/TestResources/Err/01-trzy-typy.err
+new file mode 100644
+index 0000000..e69de29
+diff --git "a/TestResources/Err/02-litera\305\202y-arytmetyka-porownania.err" "b/TestResources/Err/02-litera\305\202y-arytmetyka-porownania.err"
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/02-op-on-undefined-val.err b/TestResources/Err/02-op-on-undefined-val.err
+new file mode 100644
+index 0000000..dc0058b
+--- /dev/null
++++ b/TestResources/Err/02-op-on-undefined-val.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 1]: Value '"'x'"' is not declared in the scope.
+\ No newline at end of file
+diff --git a/TestResources/Err/02-zero-div.err b/TestResources/Err/02-zero-div.err
+new file mode 100644
+index 0000000..f30963e
+--- /dev/null
++++ b/TestResources/Err/02-zero-div.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 21]: Division by zero is not allowed.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-assign-undefined-val.err b/TestResources/Err/03-assign-undefined-val.err
+new file mode 100644
+index 0000000..ee4dcb1
+--- /dev/null
++++ b/TestResources/Err/03-assign-undefined-val.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 14]: Value '"'x'"' is not declared in the scope.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-bool-to-int-assignment.err b/TestResources/Err/03-bool-to-int-assignment.err
+new file mode 100644
+index 0000000..0655314
+--- /dev/null
++++ b/TestResources/Err/03-bool-to-int-assignment.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 5]: Cannot assign expression of type Bool to 'x: Int'.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-bool-to-string-assignment.err b/TestResources/Err/03-bool-to-string-assignment.err
+new file mode 100644
+index 0000000..3878a1a
+--- /dev/null
++++ b/TestResources/Err/03-bool-to-string-assignment.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 7]: Cannot assign expression of type Bool to 'x: String'.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-inline-redeclaration.err b/TestResources/Err/03-inline-redeclaration.err
+new file mode 100644
+index 0000000..a0404bb
+--- /dev/null
++++ b/TestResources/Err/03-inline-redeclaration.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 17]: Value '"'x'"' was already declared in its scope.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-inline-wrong-type-assignment.err b/TestResources/Err/03-inline-wrong-type-assignment.err
+new file mode 100644
+index 0000000..2684bad
+--- /dev/null
++++ b/TestResources/Err/03-inline-wrong-type-assignment.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 5]: Cannot assign expression of type String to 'x: Int'.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-wrong-type-val.err b/TestResources/Err/03-wrong-type-val.err
+new file mode 100644
+index 0000000..86a7439
+--- /dev/null
++++ b/TestResources/Err/03-wrong-type-val.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 5]: Cannot assign expression of type Int to 's: String'.
+\ No newline at end of file
+diff --git a/TestResources/Err/03-zmienne-przypisania.err b/TestResources/Err/03-zmienne-przypisania.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/04-print.err b/TestResources/Err/04-print.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/04-wrong-type-printInt-arg.err b/TestResources/Err/04-wrong-type-printInt-arg.err
+new file mode 100644
+index 0000000..706505d
+--- /dev/null
++++ b/TestResources/Err/04-wrong-type-printInt-arg.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 2, Col 1]: Function parameter is of type String but expected Int.
+\ No newline at end of file
+diff --git a/TestResources/Err/05-while-if.err b/TestResources/Err/05-while-if.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/05-wrong-type-condition.err b/TestResources/Err/05-wrong-type-condition.err
+new file mode 100644
+index 0000000..6e92430
+--- /dev/null
++++ b/TestResources/Err/05-wrong-type-condition.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 1]: Condition should be of type boolean but got Int.
+\ No newline at end of file
+diff --git a/TestResources/Err/06-09-val-in-fun.err b/TestResources/Err/06-09-val-in-fun.err
+new file mode 100644
+index 0000000..eb253fe
+--- /dev/null
++++ b/TestResources/Err/06-09-val-in-fun.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 7, Col 14]: Value '"'x'"' is not declared in the scope.
+\ No newline at end of file
+diff --git a/TestResources/Err/06-funkcje.err b/TestResources/Err/06-funkcje.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/06-modify-fun.err b/TestResources/Err/06-modify-fun.err
+new file mode 100644
+index 0000000..75289e6
+--- /dev/null
++++ b/TestResources/Err/06-modify-fun.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 6, Col 1]: Cannot reassign non-lambda function 'foo: ([(Int,mutable,copy)]) -> Int'.
+\ No newline at end of file
+diff --git a/TestResources/Err/06-rekurencja.err b/TestResources/Err/06-rekurencja.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/07-08-modify-const-param.err b/TestResources/Err/07-08-modify-const-param.err
+new file mode 100644
+index 0000000..2d0daa4
+--- /dev/null
++++ b/TestResources/Err/07-08-modify-const-param.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 3, Col 5]: Cannot modify const: 'x: Int'.
+\ No newline at end of file
+diff --git a/TestResources/Err/07-const-mutable-pass.err b/TestResources/Err/07-const-mutable-pass.err
+new file mode 100644
+index 0000000..902347c
+--- /dev/null
++++ b/TestResources/Err/07-const-mutable-pass.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 12, Col 14]: Immutable value was passed to a mutable reference parameter.
+\ No newline at end of file
+diff --git a/TestResources/Err/07-przekazywanie-argumentow.err b/TestResources/Err/07-przekazywanie-argumentow.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/08-const-for.err b/TestResources/Err/08-const-for.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/08-modify-const.err b/TestResources/Err/08-modify-const.err
+new file mode 100644
+index 0000000..684da7f
+--- /dev/null
++++ b/TestResources/Err/08-modify-const.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 2, Col 1]: Cannot modify const: 'x: Int'.
+\ No newline at end of file
+diff --git a/TestResources/Err/08-wrong-type-const.err b/TestResources/Err/08-wrong-type-const.err
+new file mode 100644
+index 0000000..86a7439
+--- /dev/null
++++ b/TestResources/Err/08-wrong-type-const.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 5]: Cannot assign expression of type Int to 's: String'.
+\ No newline at end of file
+diff --git a/TestResources/Err/09-przeslanianie-statyczne-wiazania.err b/TestResources/Err/09-przeslanianie-statyczne-wiazania.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/10-runtime-zero-div.err b/TestResources/Err/10-runtime-zero-div.err
+new file mode 100644
+index 0000000..7eab321
+--- /dev/null
++++ b/TestResources/Err/10-runtime-zero-div.err
+@@ -0,0 +1 @@
++Runtime exception at [Ln 3, Col 27]: Division by zero is not allowed.
+\ No newline at end of file
+diff --git a/TestResources/Err/11-different-return-types.err b/TestResources/Err/11-different-return-types.err
+new file mode 100644
+index 0000000..d1595ac
+--- /dev/null
++++ b/TestResources/Err/11-different-return-types.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 12, Col 5]: Tried to return value of type Int but in the same return scope tried to return another value of typeString.
+\ No newline at end of file
+diff --git a/TestResources/Err/11-funkcje-zwracajace-wartosci.err b/TestResources/Err/11-funkcje-zwracajace-wartosci.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/11-top-level-return-nested.err b/TestResources/Err/11-top-level-return-nested.err
+new file mode 100644
+index 0000000..fe7a54d
+--- /dev/null
++++ b/TestResources/Err/11-top-level-return-nested.err
+@@ -0,0 +1,2 @@
++TypeChecker exception at [Ln 1, Col 1]: Top-level program cannot return value.
++(Possibly wanted to use exit: (Int) -> Unit)
+\ No newline at end of file
+diff --git a/TestResources/Err/11-top-level-return.err b/TestResources/Err/11-top-level-return.err
+new file mode 100644
+index 0000000..fe7a54d
+--- /dev/null
++++ b/TestResources/Err/11-top-level-return.err
+@@ -0,0 +1,2 @@
++TypeChecker exception at [Ln 1, Col 1]: Top-level program cannot return value.
++(Possibly wanted to use exit: (Int) -> Unit)
+\ No newline at end of file
+diff --git a/TestResources/Err/11-wrong-return-type.err b/TestResources/Err/11-wrong-return-type.err
+new file mode 100644
+index 0000000..1960d63
+--- /dev/null
++++ b/TestResources/Err/11-wrong-return-type.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 1, Col 1]: Ident "foo" returns a value of type Int but is expected to return a value of type String.
+\ No newline at end of file
+diff --git a/TestResources/Err/12-statyczne-typowanie.err b/TestResources/Err/12-statyczne-typowanie.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/13-funkcje-zagniezdzone-ze-statycznym-wiazaniem.err b/TestResources/Err/13-funkcje-zagniezdzone-ze-statycznym-wiazaniem.err
+new file mode 100644
+index 0000000..e69de29
+diff --git "a/TestResources/Err/13-statyczne-wi\304\205zanie-licznik.err" "b/TestResources/Err/13-statyczne-wi\304\205zanie-licznik.err"
+new file mode 100644
+index 0000000..e69de29
+diff --git "a/TestResources/Err/13-statyczne-wi\304\205zanie-przes\305\202aniania.err" "b/TestResources/Err/13-statyczne-wi\304\205zanie-przes\305\202aniania.err"
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/17-07-tablice.err b/TestResources/Err/17-07-tablice.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/17-funkcje-wyzszego-rzedu-anonimowe-domkniecia.err b/TestResources/Err/17-funkcje-wyzszego-rzedu-anonimowe-domkniecia.err
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Err/17-wrong-type-lambda.err b/TestResources/Err/17-wrong-type-lambda.err
+new file mode 100644
+index 0000000..9ed9a7f
+--- /dev/null
++++ b/TestResources/Err/17-wrong-type-lambda.err
+@@ -0,0 +1 @@
++TypeChecker exception at [Ln 2, Col 5]: Cannot assign expression of type ([(Int,mutable,reference)]) -> Int to 'f: ([(Int,const,reference)]) -> Int'.
+\ No newline at end of file
+diff --git a/TestResources/Out/00-array.out b/TestResources/Out/00-array.out
+new file mode 100644
+index 0000000..cb19a15
+--- /dev/null
++++ b/TestResources/Out/00-array.out
+@@ -0,0 +1,10 @@
++Node 1 has value 1
++Node 2 has value 0
++Node 4 has value 0
++Node 8 has value 0
++Node 9 has value 1
++Node 5 has value 1
++Node 10 has value 0
++Node 3 has value 1
++Node 6 has value 0
++Node 7 has value 1
+diff --git a/TestResources/Out/01-trzy-typy.out b/TestResources/Out/01-trzy-typy.out
+new file mode 100644
+index 0000000..e69de29
+diff --git "a/TestResources/Out/02-litera\305\202y-arytmetyka-porownania.out" "b/TestResources/Out/02-litera\305\202y-arytmetyka-porownania.out"
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/02-op-on-undefined-val.out b/TestResources/Out/02-op-on-undefined-val.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/02-zero-div.out b/TestResources/Out/02-zero-div.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-assign-undefined-val.out b/TestResources/Out/03-assign-undefined-val.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-bool-to-int-assignment.out b/TestResources/Out/03-bool-to-int-assignment.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-bool-to-string-assignment.out b/TestResources/Out/03-bool-to-string-assignment.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-inline-redeclaration.out b/TestResources/Out/03-inline-redeclaration.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-inline-wrong-type-assignment.out b/TestResources/Out/03-inline-wrong-type-assignment.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-wrong-type-val.out b/TestResources/Out/03-wrong-type-val.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/03-zmienne-przypisania.out b/TestResources/Out/03-zmienne-przypisania.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/04-print.out b/TestResources/Out/04-print.out
+new file mode 100644
+index 0000000..d3cb636
+--- /dev/null
++++ b/TestResources/Out/04-print.out
+@@ -0,0 +1,3 @@
++1
++True
++Hello, world!
+diff --git a/TestResources/Out/04-wrong-type-printInt-arg.out b/TestResources/Out/04-wrong-type-printInt-arg.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/05-while-if.out b/TestResources/Out/05-while-if.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/05-wrong-type-condition.out b/TestResources/Out/05-wrong-type-condition.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/06-09-val-in-fun.out b/TestResources/Out/06-09-val-in-fun.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/06-funkcje.out b/TestResources/Out/06-funkcje.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/06-modify-fun.out b/TestResources/Out/06-modify-fun.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/06-rekurencja.out b/TestResources/Out/06-rekurencja.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/07-08-modify-const-param.out b/TestResources/Out/07-08-modify-const-param.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/07-const-mutable-pass.out b/TestResources/Out/07-const-mutable-pass.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/07-przekazywanie-argumentow.out b/TestResources/Out/07-przekazywanie-argumentow.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/08-const-for.out b/TestResources/Out/08-const-for.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/08-modify-const.out b/TestResources/Out/08-modify-const.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/08-wrong-type-const.out b/TestResources/Out/08-wrong-type-const.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/09-przeslanianie-statyczne-wiazania.out b/TestResources/Out/09-przeslanianie-statyczne-wiazania.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/10-runtime-zero-div.out b/TestResources/Out/10-runtime-zero-div.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/11-different-return-types.out b/TestResources/Out/11-different-return-types.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/11-funkcje-zwracajace-wartosci.out b/TestResources/Out/11-funkcje-zwracajace-wartosci.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/11-top-level-return-nested.out b/TestResources/Out/11-top-level-return-nested.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/11-top-level-return.out b/TestResources/Out/11-top-level-return.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/11-wrong-return-type.out b/TestResources/Out/11-wrong-return-type.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/12-statyczne-typowanie.out b/TestResources/Out/12-statyczne-typowanie.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/13-funkcje-zagniezdzone-ze-statycznym-wiazaniem.out b/TestResources/Out/13-funkcje-zagniezdzone-ze-statycznym-wiazaniem.out
+new file mode 100644
+index 0000000..e69de29
+diff --git "a/TestResources/Out/13-statyczne-wi\304\205zanie-licznik.out" "b/TestResources/Out/13-statyczne-wi\304\205zanie-licznik.out"
+new file mode 100644
+index 0000000..e69de29
+diff --git "a/TestResources/Out/13-statyczne-wi\304\205zanie-przes\305\202aniania.out" "b/TestResources/Out/13-statyczne-wi\304\205zanie-przes\305\202aniania.out"
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/17-07-tablice.out b/TestResources/Out/17-07-tablice.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/17-funkcje-wyzszego-rzedu-anonimowe-domkniecia.out b/TestResources/Out/17-funkcje-wyzszego-rzedu-anonimowe-domkniecia.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/TestResources/Out/17-wrong-type-lambda.out b/TestResources/Out/17-wrong-type-lambda.out
+new file mode 100644
+index 0000000..e69de29
+diff --git a/bad/op-on-undefined-val.shr b/bad/02-op-on-undefined-val.shr
+similarity index 100%
+rename from bad/op-on-undefined-val.shr
+rename to bad/02-op-on-undefined-val.shr
+diff --git a/bad/zero-div.shr b/bad/02-zero-div.shr
+similarity index 100%
+rename from bad/zero-div.shr
+rename to bad/02-zero-div.shr
+diff --git a/bad/assign-undefined-val.shr b/bad/03-assign-undefined-val.shr
+similarity index 100%
+rename from bad/assign-undefined-val.shr
+rename to bad/03-assign-undefined-val.shr
+diff --git a/bad/bool-to-int-assignment.shr b/bad/03-bool-to-int-assignment.shr
+similarity index 100%
+rename from bad/bool-to-int-assignment.shr
+rename to bad/03-bool-to-int-assignment.shr
+diff --git a/bad/bool-to-string-assignment.shr b/bad/03-bool-to-string-assignment.shr
+similarity index 100%
+rename from bad/bool-to-string-assignment.shr
+rename to bad/03-bool-to-string-assignment.shr
+diff --git a/bad/inline-redeclaration.shr b/bad/03-inline-redeclaration.shr
+similarity index 100%
+rename from bad/inline-redeclaration.shr
+rename to bad/03-inline-redeclaration.shr
+diff --git a/bad/inline-wrong-type-assignment.shr b/bad/03-inline-wrong-type-assignment.shr
+similarity index 100%
+rename from bad/inline-wrong-type-assignment.shr
+rename to bad/03-inline-wrong-type-assignment.shr
+diff --git a/bad/wrong-type-const.shr b/bad/03-wrong-type-val.shr
+similarity index 100%
+rename from bad/wrong-type-const.shr
+rename to bad/03-wrong-type-val.shr
+diff --git a/bad/04-wrong-type-printInt-arg.shr b/bad/04-wrong-type-printInt-arg.shr
+new file mode 100644
+index 0000000..2cf52b9
+--- /dev/null
++++ b/bad/04-wrong-type-printInt-arg.shr
+@@ -0,0 +1,2 @@
++val x: String = "string";
++printInt(x);
+\ No newline at end of file
+diff --git a/bad/05-wrong-type-condition.shr b/bad/05-wrong-type-condition.shr
+new file mode 100644
+index 0000000..dd5d11b
+--- /dev/null
++++ b/bad/05-wrong-type-condition.shr
+@@ -0,0 +1,3 @@
++if 3 {
++    printString("bad");
++}
+\ No newline at end of file
+diff --git a/bad/val-in-fun.shr b/bad/06-09-val-in-fun.shr
+similarity index 100%
+rename from bad/val-in-fun.shr
+rename to bad/06-09-val-in-fun.shr
+diff --git a/bad/modify-fun.shr b/bad/06-modify-fun.shr
+similarity index 100%
+rename from bad/modify-fun.shr
+rename to bad/06-modify-fun.shr
+diff --git a/bad/modify-const-param.shr b/bad/07-08-modify-const-param.shr
+similarity index 100%
+rename from bad/modify-const-param.shr
+rename to bad/07-08-modify-const-param.shr
+diff --git a/bad/const-mutable-pass.shr b/bad/07-const-mutable-pass.shr
+similarity index 100%
+rename from bad/const-mutable-pass.shr
+rename to bad/07-const-mutable-pass.shr
+diff --git a/bad/modify-const.shr b/bad/08-modify-const.shr
+similarity index 100%
+rename from bad/modify-const.shr
+rename to bad/08-modify-const.shr
+diff --git a/bad/wrong-type-val.shr b/bad/08-wrong-type-const.shr
+similarity index 100%
+rename from bad/wrong-type-val.shr
+rename to bad/08-wrong-type-const.shr
+diff --git a/bad/10-runtime-zero-div.shr b/bad/10-runtime-zero-div.shr
+new file mode 100644
+index 0000000..e69f4e1
+--- /dev/null
++++ b/bad/10-runtime-zero-div.shr
+@@ -0,0 +1,3 @@
++val one : Int = 1;
++val zero : Int = one - 1;
++val undefined : Int = one / zero;
+\ No newline at end of file
+diff --git a/bad/different-return-types.shr b/bad/11-different-return-types.shr
+similarity index 100%
+rename from bad/different-return-types.shr
+rename to bad/11-different-return-types.shr
+diff --git a/bad/top-level-return-nested.shr b/bad/11-top-level-return-nested.shr
+similarity index 100%
+rename from bad/top-level-return-nested.shr
+rename to bad/11-top-level-return-nested.shr
+diff --git a/bad/top-level-return.shr b/bad/11-top-level-return.shr
+similarity index 100%
+rename from bad/top-level-return.shr
+rename to bad/11-top-level-return.shr
+diff --git a/bad/wrong-return-type.shr b/bad/11-wrong-return-type.shr
+similarity index 100%
+rename from bad/wrong-return-type.shr
+rename to bad/11-wrong-return-type.shr
+diff --git a/bad/wrong-type-lambda.shr b/bad/17-wrong-type-lambda.shr
+similarity index 100%
+rename from bad/wrong-type-lambda.shr
+rename to bad/17-wrong-type-lambda.shr
+diff --git "a/good/13-statyczne-wi\304\205zanie-licznik.shr" "b/good/13-statyczne-wi\304\205zanie-licznik.shr"
+new file mode 100644
+index 0000000..cadb276
+--- /dev/null
++++ "b/good/13-statyczne-wi\304\205zanie-licznik.shr"
+@@ -0,0 +1,22 @@
++fun assert(predicate: const Bool, msg: const String) {
++  if !predicate {
++    printString(msg + "\n");
++    exit(1);
++  }
++}
++
++fun makeCounter(): () -> Int {
++  val counter: Int = -1;
++
++  fun incrementCounter(): Int {
++    counter = counter + 1;
++    return counter;
++  }
++
++  return incrementCounter;
++}
++
++val counter: () -> Int = makeCounter();
++assert(counter() == 0, "Closure test failed");
++assert(counter() == 1, "Closure test failed");
++assert(counter() == 2, "Closure test failed");
+diff --git "a/good/13-statyczne-wi\304\205zanie-przes\305\202aniania.shr" "b/good/13-statyczne-wi\304\205zanie-przes\305\202aniania.shr"
+new file mode 100644
+index 0000000..f313f4b
+--- /dev/null
++++ "b/good/13-statyczne-wi\304\205zanie-przes\305\202aniania.shr"
+@@ -0,0 +1,53 @@
++fun assert(predicate: const Bool, msg: const String) {
++  if !predicate {
++    printString(msg + "\n");
++    exit(1);
++  }
++}
++
++
++val val1: Int = 5;
++fun fun1(): Int {
++  val val1: Int = 10;
++
++  fun innerfun1(): Int {
++    return val1 * 2;
++  }
++
++  return innerfun1();
++}
++val result1: Int = fun1();
++assert(result1 == 20, "Shadowing local val by inner function val test failed");
++
++
++// shadowing param by local val
++
++fun fun2(val2: Int): Int {
++  val val2: Int = 10;
++  return val2;
++}
++
++val result2: Int = fun2(5);
++assert(result2 == 10, "Shadowing param by local val test failed");
++
++// shadownig outer val by local val
++
++val val3: Int = 20;
++fun fun3(): Int {
++  val val3: Int = 10;
++  return val3;
++}
++val result3: Int = fun3();
++
++assert(result3 == 10, "Shadowing outer val by local val test failed");
++
++// shadowing outer val by param
++
++val val4: Int = 20;
++fun fun4(val4: Int): Int {
++  return val4;
++}
++
++val result4: Int = fun4(10);
++
++assert(result4 == 10, "Shadowing outer val by param test failed");
+\ No newline at end of file
+diff --git a/properTestGenerator.sh b/properTestGenerator.sh
+new file mode 100755
+index 0000000..3767082
+--- /dev/null
++++ b/properTestGenerator.sh
+@@ -0,0 +1,15 @@
++#!/bin/bash
++
++# Run tests for .shr files in ./bad directory
++for file in ./bad/*.shr; do
++    test_name=$(basename "$file" .shr)
++    touch "./TestResources/Out/$test_name.out" "./TestResources/Err/$test_name.err"
++    ./interpreter "$file" > "./TestResources/Out/$test_name.out" 2> "./TestResources/Err/$test_name.err"
++done
++
++# Run tests for .shr files in ./good directory
++for file in ./good/*.shr; do
++    test_name=$(basename "$file" .shr)
++    touch "./TestResources/Out/$test_name.out" "./TestResources/Err/$test_name.err"
++    ./interpreter "$file" > "./TestResources/Out/$test_name.out" 2> "./TestResources/Err/$test_name.err"
++done
+\ No newline at end of file
+diff --git a/release/jn418433.zip b/release/jn418433.zip
+index dc0d9a5..f9a3b5b 100644
+Binary files a/release/jn418433.zip and b/release/jn418433.zip differ
+diff --git a/test.sh b/test.sh
+index 6087c50..ea8fc46 100755
+--- a/test.sh
++++ b/test.sh
+@@ -1,10 +1,11 @@
+ #!/bin/bash
+ 
+ OK="\e[32mOK\e[0m"
++ERROR="\e[31mERROR\e[0m"
+ clear
+ echo "========================== Compiling =========================================="
+ 
+-make
++make all
+ 
+ if [ $? -ne 0 ]; then
+     echo "Failed to compile."
+@@ -12,7 +13,7 @@ if [ $? -ne 0 ]; then
+ fi
+ 
+ 
+-make typeCheckerTest #> /dev/null 2>&1
++make typeCheckerTest
+ 
+ if [ $? -ne 0 ]; then
+     echo "typeCheckerTest failed to compile."
+@@ -35,9 +36,23 @@ echo -e $OK
+ echo "========================== checking bad files ================================="
+ for file in bad/*.shr; do
+     echo -n "$file: "
+-    ./interpreter $file > /dev/null 2>&1
++    ./interpreter $file > tmp.out 2> tmp.err
+     if [ $? -eq 0 ]; then
+-        echo "Error - Test should have failed but didn't"
++        echo -e "$ERROR - Test should have failed but didn't"
++        rm -rf tmp.err tmp.out
++        exit 1
++    fi
++
++    diff tmp.err TestResources/Err/$(basename $file .shr).err > /dev/null
++    if [ $? -ne 0 ]; then
++        echo -e "$ERROR - Stderr output does not match expected output"
++        rm -rf tmp.err tmp.out
++        exit 1
++    fi
++    diff tmp.out TestResources/Out/$(basename $file .shr).out > /dev/null
++    if [ $? -ne 0 ]; then
++        echo -e "$ERROR - Stdout output does not match expected output"
++        rm -rf tmp.err tmp.out
+         exit 1
+     fi
+     echo -e $OK
+@@ -45,16 +60,30 @@ done
+ 
+ echo "========================== checking good files ================================"
+ for file in good/*.shr; do
+-    echo "-------------------------------------------------------------------------------"
+-    echo -e "Testing: $file\n"
+-    ./interpreter $file 2>&1
++    echo -n "$file: "
++    ./interpreter $file > tmp.out 2> tmp.err
+     if [ $? -ne 0 ]; then
+-        echo -e "\nError - Test should have passed but didn't"
++        echo -e "\n$ERROR - Test should have passed but didn't"
++        rm -rf tmp.err tmp.out
+         exit 1
+     fi
+-    echo -e "\n$OK"
+-done
+ 
++    diff tmp.err TestResources/Err/$(basename $file .shr).err > /dev/null
++    if [ $? -ne 0 ]; then
++        echo -e "\n$ERROR - Stderr output does not match expected output"
++        rm -rf tmp.err tmp.out
++        exit 1
++    fi
++    diff tmp.out TestResources/Out/$(basename $file .shr).out > /dev/null
++    if [ $? -ne 0 ]; then
++        echo -e "\n$ERROR - Stdout output does not match expected output"
++        rm -rf tmp.err tmp.out
++        exit 1
++    fi
++
++    echo -e "$OK"
++done
+ 
++rm -rf tmp.err tmp.out
+ echo -e "\e[32mAll tests passed\e[0m"
+ 

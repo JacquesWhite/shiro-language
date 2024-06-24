@@ -1,0 +1,17 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+val a: Int = 1;
+assert(a == 1, "Variable declaration and initialization test 1 failed");
+
+a = 2;
+assert(a == 2, "Variable assignment test 1 failed");
+
+val b: Int = a * 2;
+assert(b == 4, "Variable declaration and initialization test 2 failed");
+
+exit(0);

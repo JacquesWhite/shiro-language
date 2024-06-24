@@ -1,0 +1,1 @@
+TypeChecker exception at [Ln 1, Col 7]: Cannot assign expression of type Bool to 'x: String'.

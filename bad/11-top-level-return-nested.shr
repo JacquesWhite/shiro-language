@@ -1,0 +1,17 @@
+if False {
+    if False {
+        return 0;
+        if False {
+            val x: Int = 1;
+            if x < 0 {
+                return 0;
+            }
+        } else {
+            return 0;
+        }
+    } else {
+        return 0;
+    }
+} else {
+    return 0;
+}

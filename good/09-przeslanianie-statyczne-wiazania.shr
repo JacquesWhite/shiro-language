@@ -1,0 +1,22 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+val x: Int = 10;
+
+fun assertGlobalX() {
+  assert(x == 10, "static binding test failed");
+}
+
+fun main() {
+  val x: Int = 5; // Shadows the global x
+  assert(x == 5, "shadowing test filed");
+  assertGlobalX();
+}
+
+main();
+
+exit(0);

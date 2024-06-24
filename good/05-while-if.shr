@@ -1,0 +1,31 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+// While loop test
+val i: Int = 0;
+while i < 5 {
+  i = i + 1;
+}
+assert(i == 5, "While loop test failed");
+
+// If statement test
+val j: Int = 10;
+if j > 5 {
+  j = j - 1;
+}
+assert(j == 9, "If statement test failed");
+
+// If-else statement test
+val k: Int = 3;
+if k > 5 {
+  k = k + 1;
+} else {
+  k = k - 1;
+}
+assert(k == 2, "If-else statement test failed");
+
+exit(0);

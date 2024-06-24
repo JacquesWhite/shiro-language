@@ -1,0 +1,24 @@
+fun assert(predicate: const Bool, msg: const String) {
+  if !predicate {
+    printString(msg + "\n");
+    exit(1);
+  }
+}
+
+fun returnInt(n: const Int): Int {
+  return n;
+}
+
+fun returnBool(b: const Bool): Bool {
+  return b;
+}
+
+fun returnString(s: const String): String {
+  return s;
+}
+
+assert(returnInt(10) == 10, "Function returning Int test failed");
+assert(returnBool(True), "Function returning Bool test failed");
+assert(returnString("hello") == "hello", "Function returning String test failed");
+
+exit(0);
